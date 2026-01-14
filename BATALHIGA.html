@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BATALHIGA - Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap');
+
+        :root {
+            --neon-blue: #00f2ff;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #05060a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-8px, 0); }
+            40% { transform: translate(8px, 0); }
+            60% { transform: translate(-8px, 0); }
+            80% { transform: translate(8px, 0); }
+        }
+        .apply-shake { animation: shake 0.4s ease-in-out; }
+
+        .life-heart {
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            margin: 0 4px;
+            display: inline-block;
+        }
+
+        .heart-break {
+            animation: heartBreak 0.6s forwards;
+        }
+
+        @keyframes heartBreak {
+            0% { transform: scale(1.5); filter: drop-shadow(0 0 10px red); }
+            100% { opacity: 0; transform: scale(0) translateY(30px); }
+        }
+
+        .card-num {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card-num.revealed {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+            border-color: #fff;
+            transform: scale(0.92);
+        }
+
+        .active-player-border {
+            border: 3px solid var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 10px; }
+        
+        .glass-effect {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex flex-col items-center pb-10">
+
+    <header class="text-center mt-4 mb-6 w-full">
+        <h1 class="text-5xl font-orbitron font-bold tracking-tighter" style="color: var(--neon-blue); text-shadow: 0 0 15px rgba(0, 242, 255, 0.5);">
+            BATAL<span class="text-white">HIGA</span>
+        </h1>
+        <p class="text-slate-500 uppercase tracking-[0.3em] text-[10px] mt-1 font-bold">Metal Elements Battle</p>
+    </header>
+
+    <main class="w-full max-w-lg flex flex-col gap-6">
+        
+        <div id="players-status" class="grid grid-cols-2 gap-3"></div>
+
+        <div id="start-screen" class="glass-effect p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-2xl font-orbitron font-bold mb-4 text-white text-center uppercase tracking-widest border-b border-slate-700 pb-4">Instruções</h2>
+            
+            <div class="mb-6 p-5 bg-black/40 rounded-2xl text-slate-200 text-sm leading-relaxed space-y-4 max-h-[400px] overflow-y-auto custom-scroll">
+                <div class="space-y-3">
+                    <p>• O jogo é para <strong>2 a 4 jogadores</strong>.</p>
+                    <p>• No início, decidam a <strong>ordem dos turnos</strong> (par ou ímpar, dado, etc.).</p>
+                    <p>• Um elemento de liga é escolhido em <strong>segredo</strong>.</p>
+                    <p>• Existem <strong>20 dicas</strong> possíveis sobre esse elemento.</p>
+                    <p>• Na sua vez, você escolhe uma das dicas para desbloquear.</p>
+                    <p>• Após ver a dica, você pode: <strong>Passar a vez</strong> ou <strong>Arriscar um palpite</strong>.</p>
+                    <p>• Se acertar, você <strong>vence</strong> a partida!</p>
+                    <p class="text-red-400 font-bold">• Se errar, perde uma vida. Cada jogador começa com 2 vidas.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-6">
+                <div class="text-center">
+                    <span class="text-xs uppercase font-bold text-slate-500 tracking-widest mb-3 block">Quantos jogadores?</span>
+                    <div class="flex gap-4">
+                        <button onclick="setPlayers(2)" id="btn-p2" class="p-btn w-16 h-16 rounded-2xl bg-slate-800 border-2 border-transparent transition-all font-bold text-xl flex items-center justify-center">2</button>
+                        <button onclick="setPlayers(3)" id="btn-p3" class="p-btn w-16 h-16 rounded-2xl bg-slate-800 border-2 border-transparent transition-all font-bold text-xl flex items-center justify-center">3</button>
+                        <button onclick="setPlayers(4)" id="btn-p4" class="p-btn w-16 h-16 rounded-2xl bg-slate-800 border-2 border-transparent transition-all font-bold text-xl flex items-center justify-center">4</button>
+                    </div>
+                </div>
+                <button onclick="startGame()" class="w-full bg-cyan-500 text-black font-orbitron font-bold py-5 rounded-2xl shadow-lg transition-all active:scale-95 text-xl uppercase tracking-tighter">
+                    Iniciar Batalha
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden flex flex-col gap-6">
+            <div class="glass-effect p-4 rounded-3xl">
+                <div id="grid-pistas" class="grid grid-cols-4 gap-3"></div>
+            </div>
+
+            <div id="clue-display" class="bg-slate-950 p-6 rounded-2xl border-2 border-cyan-500/30 text-center text-lg font-semibold text-cyan-50 shadow-inner min-h-[110px] flex items-center justify-center leading-tight">
+                Aguardando sua escolha...
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center px-2">
+                    <span class="text-xs uppercase font-bold text-slate-500 tracking-widest">Histórico da Partida</span>
+                    <span id="clue-count" class="text-[10px] text-cyan-500 font-bold bg-cyan-500/10 px-2 py-1 rounded">0/20</span>
+                </div>
+                <div id="history-panel" class="bg-black/40 rounded-2xl p-4 max-h-40 overflow-y-auto custom-scroll border border-slate-800">
+                    <div id="history-content" class="text-sm space-y-3">
+                        <p class="italic text-slate-600 text-center py-4 text-xs">O histórico aparecerá aqui.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="action-panel" class="glass-effect p-5 rounded-3xl flex flex-col gap-4">
+                <select id="guess-input" class="w-full bg-slate-950 border-2 border-slate-800 text-white p-4 rounded-2xl text-lg outline-none appearance-none focus:border-cyan-500 transition-colors">
+                    <option value="" disabled selected>Selecionar elemento...</option>
+                    <option value="Carbono">Carbono</option><option value="Manganês">Manganês</option>
+                    <option value="Fósforo">Fósforo</option><option value="Enxofre">Enxofre</option>
+                    <option value="Silício">Silício</option><option value="Níquel">Níquel</option>
+                    <option value="Cromo">Cromo</option><option value="Molibdênio">Molibdênio</option>
+                    <option value="Vanádio">Vanádio</option><option value="Alumínio">Alumínio</option>
+                    <option value="Cobalto">Cobalto</option><option value="Chumbo">Chumbo</option>
+                    <option value="Cobre">Cobre</option><option value="Tungstênio">Tungstênio</option>
+                </select>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="checkGuess()" class="w-full bg-cyan-500 text-black font-bold py-5 rounded-2xl uppercase text-lg shadow-lg active:scale-[0.98] transition-all">Arriscar</button>
+                    <button onclick="nextTurn()" class="w-full bg-slate-800 text-white font-bold py-4 rounded-2xl uppercase text-sm border border-slate-700 active:bg-slate-700 transition-all">Passar Vez</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-screen" class="hidden glass-effect p-10 rounded-[2rem] border-2 border-cyan-500 text-center shadow-[0_0_50px_rgba(0,242,255,0.2)]">
+            <div id="win-icon" class="text-8xl mb-6">🏆</div>
+            <h2 id="winner-title" class="text-4xl font-orbitron font-bold text-white mb-4 leading-none"></h2>
+            <p id="win-message" class="text-lg text-slate-300 mb-10"></p>
+            <button onclick="location.reload()" class="w-full bg-white text-black font-orbitron font-bold py-6 rounded-2xl text-xl shadow-xl hover:scale-105 transition-transform">REINICIAR</button>
+        </div>
+    </main>
+
+    <script>
+        const database = {
+            "Carbono": {
+                "formal": ["Este elemento é o principal responsável por transformar ferro em aço","Pequenas quantidades já alteram drasticamente a dureza","Aumenta significativamente a resistência mecânica","Contribui fortemente para o aumento da dureza","Reduz a ductilidade do material","Em excesso, torna o aço mais frágil","Afeta diretamente a soldabilidade de forma negativa","Está presente em praticamente todos os aços","Seu controle é essencial em tratamentos térmicos","Atua como elemento endurecedor básico","Influencia a resistência ao desgaste","Aumenta a resistência à abrasão indiretamente","É decisivo para a formação de martensita","Quanto maior seu teor, mais difícil é a usinagem","Não melhora a resistência à corrosão","Não atua como desoxidante principal","É o elemento de liga mais fundamental","Está associado à perda de tenacidade em altos teores","Afeta o equilíbrio entre dureza e ductilidade","É o primeiro elemento considerado no projeto de um aço","Não melhora o desempenho em altas temperaturas","Está ligado ao aumento da resistência ao impacto apenas em baixos teores","Controla o limite de escoamento","Influencia diretamente a microestrutura","Seu excesso pode causar trincas","É essencial, mas perigoso se mal dosado","Interfere negativamente na soldagem","Atua em quase todas as propriedades mecânicas","É o elemento mais simples e mais importante","Sem ele, não existe aço"],
+                "informal": ["Define se o aço vira arame ou uma faca de corte.","É o 'combustível' da têmpera.","Inimigo número 1 do soldador.","Dá a 'alma' ao metal.","Responsável por aquele fio de navalha duradouro.","Em níveis baixos, é fácil de amassar com a mão.","Faz o metal 'gritar' se resfriar rápido demais.","O elemento mais barato para ganhar força.","Muito abundante na natureza.","O mestre da dureza básica."]
+            },
+            "Manganês": {
+                "formal": ["Aumenta a resistência mecânica","Contribui para o aumento da dureza","Melhora a temperabilidade","Atua como desoxidante no aço líquido","Ajuda a neutralizar os efeitos do enxofre","Melhora a resistência ao desgaste","Contribui para a resistência à abrasão","Aumenta a resistência ao impacto","Não reduz drasticamente a soldabilidade","É comum em aços estruturais","Melhora a qualidade metalúrgica do aço","Auxilia na remoção de impurezas","Atua em conjunto com o carbono","Aumenta a resistência sem fragilizar tanto","Ajuda no controle da microestrutura","Não melhora a resistência à corrosão","Atua fortemente em tratamentos térmicos","Reduz defeitos causados pelo enxofre","Melhora a homogeneidade do aço","É um elemento de liga de baixo custo","Muito usado em aços comerciais","Contribui para a resistência em aplicações mecânicas","Não atua em altas temperaturas","Não é um elemento nobre","Tem papel importante na desoxidação","Aumenta a resistência geral do aço","Atua na formação de soluções sólidas","Melhora propriedades sem comprometer muito a ductilidade","É comum em quase todos os aços carbono","Atua mais como reforço estrutural do que químico"],
+                "informal": ["O faxineiro do aço líquido.","Segredo dos trilhos de trem pesados.","Fica mais duro quanto mais apanha (impacto).","Impede que o enxofre destrua a liga.","O braço direito do Carbono.","Brasil é um dos maiores produtores.","Evita que o aço vire 'biscoito' ao forjar.","Limpa o oxigênio na fabricação.","O elemento do equilíbrio industrial.","Essencial para pontes e prédios."]
+            },
+            "Fósforo": {
+                "formal": ["Aumenta a resistência mecânica","Contribui para o aumento da dureza","Reduz significativamente a ductilidade","Prejudica a tenacidade","Torna o aço mais frágil","Não melhora a resistência ao impacto","Pequenas quantidades já causam efeitos negativos","É considerado um elemento indesejável em muitos aços","Pode melhorar levemente a usinabilidade","Prejudica a soldabilidade","Não melhora a resistência à corrosão","Atua negativamente em aplicações estruturais","Aumenta a fragilidade a frio","Seu controle é rigoroso na siderurgia","Não melhora a resistência ao desgaste","Pode aumentar a resistência, mas com custo mecânico","Não atua como desoxidante","Afeta negativamente tratamentos térmicos","Pode causar trincas","É tolerado apenas em pequenas quantidades","Está associado a falhas frágeis","Reduz a ductilidade mais que o carbono","Não melhora propriedades em altas temperaturas","Não melhora a temperabilidade","É mais prejudicial do que benéfico","É difícil de remover do aço","Aumenta o risco de fratura","Atua negativamente na integridade estrutural","É evitado em aços de qualidade","É um elemento de controle crítico"],
+                "informal": ["O sal do aço: um pouquinho ajuda, muito estraga.","Faz o metal quebrar como vidro no frio.","Um 'mal necessário' em algumas receitas.","Dá brilho, mas tira a segurança.","O pesadelo dos engenheiros estruturais.","Muito comum em fertilizantes também.","Aumenta a dureza de forma barata e perigosa.","O perigo silencioso da metalurgia.","Difícil de expulsar da liga.","Pode causar trincas fantasmas."]
+            },
+            "Enxofre": {
+                "formal": ["Reduz a ductilidade do aço","Prejudica a resistência mecânica","Aumenta a fragilidade","Melhora a usinabilidade","Forma inclusões indesejáveis","Não melhora a resistência ao impacto","Prejudica a soldabilidade","É considerado uma impureza","Atua negativamente na tenacidade","Pode causar trincas a quente","Não melhora a resistência à corrosão","Reduz a qualidade estrutural","É controlado rigorosamente","Atua negativamente em aplicações críticas","Pode ser neutralizado pelo manganês","Não melhora a dureza","Não melhora a temperabilidade","Aumenta a fragilidade intergranular","É tolerado apenas em aços de fácil usinagem","Prejudica o desempenho mecânico geral","Não atua como desoxidante","Forma sulfetos frágeis","Afeta negativamente tratamentos térmicos","Reduz a resistência ao impacto","Aumenta a probabilidade de falhas","Não melhora resistência ao desgaste","Atua como elemento indesejável","Seu excesso compromete o aço","Está associado a defeitos metalúrgicos","É evitado em aços estruturais"],
+                "informal": ["Tem cheiro de ovo podre na forma pura.","O queridinho de quem faz parafusos rápidos.","Faz o metal 'desfarelar' na usinagem.","Inimigo mortal da solda perfeita.","Causa trincas durante a forja (quente).","O lubrificante barato das ferramentas.","Se não tiver Manganês por perto, ele mata o aço.","Vem muitas vezes do carvão e minérios.","Pequenas 'manchas' na estrutura interna.","O vilão da integridade mecânica."]
+            },
+            "Silício": {
+                "formal": ["Atua como desoxidante","Aumenta a resistência mecânica","Contribui para o aumento da dureza","Melhora a resistência à corrosão","Aumenta a resistência à oxidação","Não reduz drasticamente a ductilidade","Melhora propriedades elásticas","Atua na limpeza do aço","É comum em aços estruturais","Ajuda na qualidade metalúrgica","Melhora a resistência em ambientes agressivos","Atua positivamente na microestrutura","Não melhora a usinabilidade","Não prejudica fortemente a soldabilidade","Aumenta a resistência geral","Atua como elemento auxiliar","Melhora a resistência ao envelhecimento","É usado em aços elétricos","Não melhora resistência ao impacto","Contribui para estabilidade estrutural","Não atua em altas temperaturas","Não melhora a temperabilidade","Atua na redução de impurezas","Melhora propriedades físicas","Atua sem causar fragilidade excessiva","É um elemento de liga comum","Atua em baixos teores","Melhora a resistência à oxidação superficial","Não é um elemento nobre","Atua mais quimicamente do que mecanicamente"],
+                "informal": ["O mestre das molas.","Essencial para transformadores elétricos.","Vem basicamente da areia.","Faz o metal líquido correr como água.","O cérebro da eletrônica moderna.","Tira as bolhas do metal derretido.","Garante que a faca dobre e não quebre.","Protege o metal do oxigênio.","O elemento da flexibilidade.","Dá resistência sem ser pesado."]
+            },
+            "Níquel": {
+                "formal": ["Aumenta significativamente a resistência ao impacto","Melhora a tenacidade do aço","Mantém boa ductilidade mesmo com alta resistência","Contribui para a resistência mecânica","Atua positivamente em baixas temperaturas","Melhora a resistência à corrosão","É comum em aços inoxidáveis","Não aumenta excessivamente a dureza","Ajuda a evitar fraturas frágeis","Atua na estabilidade da microestrutura","Melhora a resistência à fadiga","Não prejudica severamente a soldabilidade","Contribui para aplicações estruturais críticas","É usado quando se busca equilíbrio mecânico","Atua melhor combinado com cromo","Não melhora a usinabilidade","Aumenta a resistência sem fragilizar","Melhora o comportamento em impacto","É comum em aços de alta tenacidade","Não atua como desoxidante","Atua em aplicações criogênicas","Melhora propriedades mecânicas gerais","Não melhora resistência à abrasão","Contribui para estabilidade dimensional","Atua mais mecanicamente do que quimicamente","Não melhora a temperabilidade de forma dominante","É um elemento relativamente caro","Associado a aços de alto desempenho","Melhora a vida útil do material","Está ligado à resistência e tenacidade"],
+                "informal": ["O metal das moedas.","Aguenta o frio do Alasca sem trincar.","Dá um brilho amarelado luxuoso.","Elemento 'nobre' e caro.","Usado em cordas de guitarra.","O segredo dos motores de avião.","Traz a confiança para peças que vibram muito.","Faz o aço inox ser resistente e dócil.","Amigo da pancada pesada.","Não gosta de ser magnético."]
+            },
+            "Cromo": {
+                "formal": ["Aumenta significativamente a resistência à corrosão","Contribui para o aumento da dureza","Melhora a resistência ao desgaste","Aumenta a resistência à abrasão","Atua fortemente em altas temperaturas","Melhora a temperabilidade","Forma carbonetos duros","É essencial em aços inoxidáveis","Aumenta a resistência mecânica","Contribui para maior vida útil","Melhora o desempenho em ambientes agressivos","Não melhora a usinabilidade","Pode reduzir a ductilidade","Atua positivamente em tratamentos térmicos","Aumenta a resistência à oxidação","Contribui para estabilidade microestrutural","Atua tanto mecanicamente quanto quimicamente","Não atua como desoxidante principal","É usado em ferramentas e moldes","Aumenta a resistência ao calor","Melhora resistência ao desgaste superficial","Pode dificultar a soldabilidade","É comum em aços especiais","Atua em aplicações de alta exigência","Melhora resistência química","Aumenta a dureza sem depender só do carbono","Contribui para resistência estrutural","Atua em conjunto com níquel","Está associado à proteção contra corrosão","É um dos elementos mais importantes de liga"],
+                "informal": ["Cria uma 'pele' invisível anti-ferrugem.","Famoso em torneiras e para-choques brilhantes.","O rei do Aço Inox.","Aguenta o fogo sem descascar.","Deixa a faca difícil de amolar, mas eterna.","Protege contra o limão e a maresia.","O elemento do design e da higiene.","Dá o status 'premium' ao metal.","Superfície muito dura.","Inimigo do desgaste."]
+            },
+            "Molibdênio": {
+                "formal": ["Aumenta a resistência em altas temperaturas","Melhora significativamente a temperabilidade","Contribui para a resistência mecânica","Aumenta a resistência à fluência","Melhora a resistência à corrosão","Atua fortemente em aços de alta performance","Evita fragilização em serviço","Melhora o desempenho sob carga contínua","Atua em conjunto com cromo","Aumenta a resistência ao desgaste","Não melhora a usinabilidade","Pode reduzir a ductilidade em excesso","Contribui para estabilidade térmica","Melhora resistência à fadiga","Atua em aplicações críticas","Não atua como desoxidante","Aumenta a vida útil do material","É usado em aços de alta temperatura","Contribui para resistência química","Melhora a resistência estrutural","Atua em ambientes severos","Aumenta a resistência mecânica sem depender do carbono","É um elemento de liga nobre","Melhora comportamento em serviço prolongado","Atua contra a fragilização por revenido","Aumenta a confiabilidade do aço","É comum em aços ligados especiais","Atua fortemente em tratamentos térmicos","Contribui para desempenho extremo","Está ligado a resistência térmica e mecânica"],
+                "informal": ["O mestre do calor extremo.","Favorito para chassis de carros de corrida (Chromoly).","Segura as pontas quando o metal fica vermelho.","Usado em brocas que furam metal grosso.","Peças de petróleo no fundo do mar.","O reforço invisível das ligas de elite.","Elemento muito denso e pesado.","Evita que o aço amoleça no trabalho duro.","Aliado das altas pressões.","O braço forte da engenharia moderna."]
+            },
+            "Vanádio": {
+                "formal": ["Aumenta significativamente a resistência mecânica","Contribui para o aumento da dureza","Forma carbonetos muito duros","Melhora a resistência ao desgaste","Aumenta a resistência à abrasão","Atua na refinação do grão","Melhora a resistência estrutural","Contribui para maior limite de escoamento","Atua fortemente em aços ferramenta","Melhora a estabilidade microestrutural","Não melhora a usinabilidade","Pode reduzir a ductilidade","Atua positivamente em tratamentos térmicos","Aumenta a vida útil do material","Contribui para resistência à fadiga","Atua em aplicações de alta exigência","Não atua como desoxidante principal","Aumenta a resistência ao desgaste superficial","Melhora propriedades mecânicas gerais","Atua em conjunto com cromo","Contribui para resistência em altas temperaturas","É comum em aços microligados","Melhora desempenho sob carga","Atua como reforço estrutural","Não melhora resistência ao corrosão","Contribui para microestrutura mais fina","Atua fortemente no endurecimento","É usado em pequenas quantidades","Melhora confiabilidade do aço","Está ligado à alta resistência e dureza"],
+                "informal": ["Símbolo gravado nas melhores chaves de boca.","Dá ao aço um corte 'agressivo'.","Refina os grãos internos como um microscópio.","O metal do torque infinito.","Permite fazer ferramentas finas e indestrutíveis.","Nome inspirado em uma deusa nórdica (Vanadis).","Inimigo da fadiga mecânica.","Traz a 'confiança' ao mecânico profissional.","O toque final das ligas especiais.","Dá longevidade extrema ao fio."]
+            },
+            "Alumínio": {
+                "formal": ["Atua como desoxidante","Melhora a limpeza do aço","Contribui para refino de grão","Aumenta a resistência à oxidação","Melhora estabilidade metalúrgica","Atua em pequenas quantidades","Não aumenta significativamente a dureza","Não melhora resistência mecânica diretamente","Melhora propriedades químicas","Atua no controle de inclusões","Melhora a qualidade estrutural","Não melhora a usinabilidade","Não prejudica fortemente a ductilidade","Atua na estabilidade microestrutural","É usado como elemento auxiliar","Não melhora resistência ao desgaste","Atua em aços calmados","Melhora resistência superficial à oxidação","Não melhora resistência ao impacto","Atua no controle metalúrgico","É essencial na produção de aço limpo","Atua quimicamente mais do que mecanicamente","Não melhora temperabilidade","É comum em processos siderúrgicos","Não melhora resistência à corrosão geral","Atua na prevenção de defeitos","Contribui para qualidade do material","Não atua em altas temperaturas","É um elemento leve e reativo","Atua nos bastidores da resistência"],
+                "informal": ["Famoso por latinhas e aviões.","O metal mais leve da lista.","Tira o oxigênio 'na marra' da fabricação.","Reciclável infinitas vezes.","Aparece em quase tudo, da cozinha ao foguete.","Reflete o calor como um espelho.","O elemento mais abundante na crosta da Terra.","Acalma o banho de metal fervente.","Proteção branca e fosca.","O guardião da pureza do aço."]
+            },
+            "Cobalto": {
+                "formal": ["Aumenta a resistência em altas temperaturas","Melhora a resistência ao calor","Atua em aços de alta performance","Contribui para estabilidade térmica","Melhora propriedades mecânicas em serviço quente","Não melhora resistência à corrosão","Não atua como desoxidante","É usado em aços especiais","Melhora desempenho em ferramentas","Atua em aplicações extremas","Aumenta a dureza a quente","Contribui para resistência estrutural","Não melhora usinabilidade","Pode reduzir a ductilidade","Atua em conjunto com tungstênio","Melhora resistência ao revenido","Contribui para desempenho térmico","É relativamente raro","Aumenta confiabilidade em altas temperaturas","Atua mais termicamente do que mecanicamente","Não melhora resistência ao impacto","Atua em aços rápidos","Contribui para estabilidade dimensional","Não melhora soldabilidade","Atua em aplicações industriais severas","Aumenta a vida útil em calor","Não melhora resistência à abrasão","É um elemento de liga caro","Atua em ferramentas de corte","Está ligado a desempenho em altas temperaturas"],
+                "informal": ["Dá uma cor azul profunda maravilhosa.","A 'cola' que segura o tungstênio nas brocas.","Essencial para ímãs superpoderosos.","Usado em turbinas de aviões a jato.","Aguenta o atrito que derreteria outros metais.","Elemento de mineração perigosa e rara.","Não deixa o aço 'relaxar' no calor.","Superligas espaciais amam ele.","O metal do desempenho extremo.","Íntimo dos cortes cirúrgicos industriais."]
+            },
+            "Chumbo": {
+                "formal": ["Melhora significativamente a usinabilidade","Facilita o corte e a remoção de cavaco","Não melhora resistência mecânica","Não aumenta a dureza","Reduz a soldabilidade","Prejudica propriedades mecânicas","Atua negativamente na resistência estrutural","É usado apenas em aplicações específicas","Não melhora resistência ao impacto","Atua como lubrificante interno","Reduz a ductilidade","Não melhora resistência à corrosão","Atua apenas em pequenas quantidades","É tóxico","Não atua em tratamentos térmicos","Melhora produtividade de usinagem","Prejudica a tenacidade","Não melhora resistência ao desgaste","É usado em aços de fácil usinagem","Não atua como desoxidante","Pode causar problemas metalúrgicos","Reduz qualidade estrutural","Atua apenas para fabricação","Não melhora resistência em altas temperaturas","É evitado em aços estruturais","Atua mais no processo do que no produto final","Não melhora propriedades mecânicas","Facilita fabricação em série","É um elemento controverso","Está ligado exclusivamente à usinabilidade"],
+                "informal": ["O metal mais macio e pesado.","Protege você no dentista (Raio-X).","O pesadelo ecológico se mal usado.","Faz a broca deslizar como se fosse manteiga.","Derrete até no fogão de casa.","Não deixa o sino tocar (abafa o som).","O rei da produtividade barata.","Muito denso, pouco resistente.","Pesa na balança, mas não na dureza.","O 'mordomo' do torneiro mecânico."]
+            },
+            "Cobre": {
+                "formal": ["Melhora a resistência à corrosão","Atua contra corrosão atmosférica","Contribui para durabilidade do aço","Não aumenta significativamente a dureza","Não melhora resistência ao desgaste","Atua em pequenas quantidades","Pode reduzir a ductilidade em excesso","Melhora resistência em ambientes externos","Não melhora a temperabilidade","Não atua como desoxidante","Pode causar fragilização a quente","É usado em aços patináveis","Aumenta a vida útil estrutural","Atua quimicamente","Não melhora resistência ao impacto","Contribui para estabilidade química","Não melhora usinabilidade","Atua contra oxidação superficial","Não melhora resistência em altas temperaturas","Atua em conjunto com níquel","Melhora resistência ambiental","Não melhora soldabilidade","É comum em aços expostos","Atua sem grandes mudanças mecânicas","Contribui para proteção natural","Não aumenta resistência mecânica geral","Atua na durabilidade","Não forma carbonetos duros","Atua mais quimicamente que estruturalmente","Está ligado à resistência à corrosão"],
+                "informal": ["Rei dos fios elétricos.","Cria aquela ferrugem 'bonita' e protetora (Corten).","Cor avermelhada clássica.","Mata bactérias por contato.","O primeiro metal que a humanidade dominou.","Faz o aço aguentar a maresia por décadas.","O metal das moedas antigas e estátuas.","Excelente para espalhar o calor.","Ingrediente secreto do bronze e latão.","Protege o metal do tempo."]
+            },
+            "Tungstênio": {
+                "formal": ["Aumenta significativamente a dureza","Melhora a resistência ao desgaste","Aumenta a resistência à abrasão","Atua fortemente em altas temperaturas","Mantém dureza a quente","É essencial em aços rápidos","Forma carbonetos extremamente duros","Aumenta a resistência mecânica","Contribui para ferramentas de corte","Melhora resistência ao revenido","Não melhora usinabilidade","Reduz a ductilidade","Atua em aplicações extremas","Melhora estabilidade térmica","Contribui para longa vida útil","Não atua como desoxidante","Aumenta resistência estrutural","Atua em conjunto com cobalto","Melhora desempenho sob calor intenso","Não melhora resistência à corrosão","Atua em aços ferramenta","Contribui para dureza profunda","Atua fortemente em tratamentos térmicos","É um elemento pesado","Aumenta custo do aço","Atua onde o calor é extremo","Melhora resistência ao desgaste severo","Mantém propriedades em serviço pesado","Está ligado a aplicações industriais críticas","É símbolo de dureza e calor"],
+                "informal": ["O metal mais difícil de derreter do universo.","Ponta das brocas que furam parede (Vídia).","Filamento de lâmpadas que brilham forte.","Pesado quase como o ouro.","O rei do corte industrial (Aço Rápido).","Alianças que nunca riscam.","O segurança que não sai do lugar no calor.","'Come' o esmeril se você tentar lixar.","Conhecido como Wolfram.","Sinônimo de dureza extrema."]
+            }
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playClick() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        let numPlayers = 2;
+        let players = [];
+        let currentPlayerIdx = 0;
+        let currentElement = "";
+        let currentDicas = [];
+        let revealedClues = [];
+        let playerActionTaken = false;
+
+        function setPlayers(num) {
+            playClick();
+            numPlayers = num;
+            document.querySelectorAll('.p-btn').forEach(b => {
+                b.classList.remove('border-cyan-500', 'bg-cyan-500', 'text-black');
+                b.classList.add('bg-slate-800', 'text-white');
+            });
+            const btn = document.getElementById(`btn-p${num}`);
+            btn.classList.add('border-cyan-500', 'bg-cyan-500', 'text-black');
+            btn.classList.remove('bg-slate-800');
+        }
+
+        function startGame() {
+            playClick();
+            players = [];
+            for(let i=1; i<=numPlayers; i++) players.push({ id: i, lives: 2, active: true });
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            initRound();
+        }
+
+        function initRound() {
+            const elNames = Object.keys(database);
+            currentElement = elNames[Math.floor(Math.random() * elNames.length)];
+            
+            const data = database[currentElement];
+            const informais = [...data.informal];
+            const formais = [...data.formal];
+            
+            let selected = [];
+            
+            // Garante 5 informais
+            for(let i=0; i<5; i++) {
+                const idx = Math.floor(Math.random() * informais.length);
+                selected.push(informais.splice(idx, 1)[0]);
+            }
+            
+            // Completa com aleatórias
+            const rest = [...informais, ...formais];
+            while(selected.length < 20) {
+                const idx = Math.floor(Math.random() * rest.length);
+                selected.push(rest.splice(idx, 1)[0]);
+            }
+
+            currentDicas = selected.sort(() => Math.random() - 0.5);
+            currentPlayerIdx = 0;
+            revealedClues = [];
+            playerActionTaken = false;
+            document.getElementById('history-content').innerHTML = '<p class="italic text-slate-600 text-center py-4 text-xs">O histórico aparecerá aqui.</p>';
+            document.getElementById('clue-count').innerText = "0/20";
+            document.getElementById('clue-display').innerText = "Toque em um número ou arrisque...";
+            updateStatus();
+            renderGrid();
+        }
+
+        function updateStatus() {
+            const container = document.getElementById('players-status');
+            container.innerHTML = "";
+            players.forEach((p, i) => {
+                const isActive = (i === currentPlayerIdx);
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-[1.5rem] border-2 flex flex-col items-center transition-all duration-300 ${isActive ? 'active-player-border scale-105 shadow-lg shadow-cyan-500/20' : 'border-slate-800/50 bg-slate-900/30'} ${!p.active ? 'opacity-10 grayscale blur-[1px]' : ''}`;
+                
+                let hearts = "";
+                for(let l=0; l<2; l++) {
+                    const statusClass = l < p.lives ? 'text-red-500' : 'opacity-0 scale-0';
+                    hearts += `<span id="heart-${p.id}-${l}" class="life-heart ${statusClass}">❤</span>`;
+                }
+
+                div.innerHTML = `
+                    <span class="text-[12px] font-orbitron font-bold tracking-widest ${isActive ? 'text-cyan-400' : 'text-slate-500'}">PLAYER ${p.id}</span>
+                    <div class="flex mt-1">${hearts}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid-pistas');
+            grid.innerHTML = "";
+            for (let i = 1; i <= 20; i++) {
+                const b = document.createElement('button');
+                b.className = "card-num h-14 rounded-2xl font-orbitron text-xl flex items-center justify-center shadow-lg";
+                b.innerText = i;
+                b.onclick = () => {
+                    if (playerActionTaken || b.classList.contains('revealed')) return;
+                    playClick();
+                    playerActionTaken = true;
+                    b.classList.add('revealed');
+                    const txt = currentDicas[i-1];
+                    document.getElementById('clue-display').innerText = `"${txt}"`;
+                    addClueToHistory(i, txt);
+                };
+                grid.appendChild(b);
+            }
+        }
+
+        function addClueToHistory(num, text) {
+            const history = document.getElementById('history-content');
+            if (revealedClues.length === 0) history.innerHTML = "";
+            revealedClues.push({ num, text });
+            document.getElementById('clue-count').innerText = `${revealedClues.length}/20`;
+            const p = document.createElement('div');
+            p.className = "p-3 bg-white/5 rounded-xl border-l-4 border-cyan-500 flex gap-3 items-start animate-fade-in";
+            p.innerHTML = `
+                <span class="bg-cyan-500 text-black font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-lg shrink-0">${num}</span>
+                <span class="text-slate-300 text-xs leading-tight">"${text}"</span>
+            `;
+            history.prepend(p);
+        }
+
+        function checkGuess() {
+            playClick();
+            const val = document.getElementById('guess-input').value;
+            if (!val) return;
+
+            if (val === currentElement) {
+                victory();
+            } else {
+                document.body.classList.add('apply-shake');
+                setTimeout(() => document.body.classList.remove('apply-shake'), 400);
+
+                const p = players[currentPlayerIdx];
+                p.lives--;
+                if (p.lives <= 0) p.active = false;
+
+                const actives = players.filter(pl => pl.active);
+                if (actives.length === 0) {
+                    defeat();
+                } else if (actives.length === 1 && players.length > 1) {
+                    victory(actives[0]);
+                } else {
+                    nextTurn();
+                }
+            }
+        }
+
+        function nextTurn() {
+            playClick();
+            playerActionTaken = false;
+            do {
+                currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
+            } while (!players[currentPlayerIdx].active);
+            document.getElementById('guess-input').value = "";
+            document.getElementById('clue-display').innerText = "Toque em um número ou arrisque...";
+            updateStatus();
+        }
+
+        function victory(w = null) {
+            const win = w || players[currentPlayerIdx];
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('win-screen').classList.remove('hidden');
+            document.getElementById('winner-title').innerText = `PLAYER ${win.id} VENCEU!`;
+            document.getElementById('win-message').innerText = `O elemento era ${currentElement}.`;
+        }
+
+        function defeat() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('win-screen').classList.remove('hidden');
+            document.getElementById('win-icon').innerText = "💀";
+            document.getElementById('winner-title').innerText = `DERROTA`;
+            document.getElementById('win-message').innerText = `Ninguém acertou. Era o ${currentElement}.`;
+        }
+
+        setPlayers(2);
+    </script>
+</body>
+</html>
